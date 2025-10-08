@@ -1,0 +1,697 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Draw App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding-bottom: 80px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 15px 0;
+            margin-bottom: 15px;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .tab-content {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            min-height: calc(100vh - 200px);
+            width: 100%;
+        }
+        
+        .active-tab {
+            display: block;
+        }
+        
+        /* Participants Tab */
+        .input-group {
+            display: flex;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 10px 0 0 10px;
+            font-size: 1rem;
+            outline: none;
+            min-width: 0;
+        }
+        
+        button {
+            background: #ffcc00;
+            color: #333;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 0 10px 10px 0;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        button:hover {
+            background: #ffd633;
+        }
+        
+        .participant-list {
+            list-style: none;
+            max-height: 50vh;
+            overflow-y: auto;
+            width: 100%;
+        }
+        
+        .participant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 10px;
+            background: rgba(255, 255, 255, 0.2);
+            margin-bottom: 8px;
+            border-radius: 10px;
+            width: 100%;
+        }
+        
+        .participant-item:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .delete-btn {
+            background: #ff4757;
+            color: white;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+        
+        /* Spinner Tab */
+        .wheel-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .wheel-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 20px auto;
+        }
+        
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            transition: transform 3s cubic-bezier(0.2, 0.8, 0.1, 0.9);
+            box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.2), 0 0 20px rgba(0, 0, 0, 0.3);
+            transform: rotate(0deg);
+        }
+        
+        .wheel-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .segment-content {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            transform-origin: center;
+            transform: rotate(90deg);
+            font-weight: bold;
+            color: #333;
+            padding-left: 30px;
+            font-size: 14px;
+        }
+        
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 50%;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6a11cb;
+            font-size: 1.5rem;
+        }
+        
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 25px;
+            height: 30px;
+            background: #ffcc00;
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 5;
+        }
+        
+        .spin-btn {
+            display: block;
+            width: 90%;
+            max-width: 250px;
+            margin: 20px auto;
+            padding: 15px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Winner Screen */
+        .winner-screen {
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+            display: none;
+        }
+        
+        .winner-screen h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .winner-name {
+            font-size: 2.2rem;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Winners List */
+        .winners-list {
+            list-style: none;
+            max-height: 60vh;
+            overflow-y: auto;
+            width: 100%;
+        }
+        
+        .winner-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 10px;
+            background: rgba(255, 255, 255, 0.2);
+            margin-bottom: 8px;
+            border-radius: 10px;
+            width: 100%;
+        }
+        
+        .winner-date {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #333;
+            text-decoration: none;
+            font-size: 0.75rem;
+            padding: 5px 8px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            flex: 1;
+            max-width: 33%;
+        }
+        
+        .nav-item.active {
+            color: #6a11cb;
+            background: rgba(106, 17, 203, 0.1);
+        }
+        
+        .nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 3px;
+        }
+        
+        .center-nav {
+            transform: translateY(-10px);
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+            padding: 12px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            max-width: 50px;
+        }
+        
+        .center-nav.active {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 30px 15px;
+            opacity: 0.7;
+            width: 100%;
+        }
+        
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 380px) {
+            .wheel-container {
+                width: 250px;
+                height: 250px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .winner-name {
+                font-size: 1.8rem;
+            }
+        }
+        
+        @media (min-width: 500px) {
+            .container {
+                max-width: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Lucky Draw</h1>
+        </header>
+        
+        <!-- Participants Tab -->
+        <div id="participants-tab" class="tab-content active-tab">
+            <h2>Participants</h2>
+            <p>Add participants for the lucky draw</p>
+            
+            <div class="input-group">
+                <input type="text" id="participant-name" placeholder="Enter participant name">
+                <button id="add-participant">Add</button>
+            </div>
+            
+            <ul id="participant-list" class="participant-list">
+                <!-- Participants will be listed here -->
+            </ul>
+            
+            <div id="empty-participants" class="empty-state">
+                <i class="fas fa-users"></i>
+                <p>No participants added yet</p>
+            </div>
+        </div>
+        
+        <!-- Lucky Wheel Tab -->
+        <div id="wheel-tab" class="tab-content">
+            <h2>Lucky Wheel</h2>
+            <p>Spin the wheel to pick a winner</p>
+            
+            <div class="wheel-section">
+                <div id="winner-screen" class="winner-screen">
+                    <h2>Congratulations!</h2>
+                    <p>The winner is:</p>
+                    <div id="winner-name" class="winner-name">John Doe</div>
+                    <button id="close-winner">Continue</button>
+                </div>
+                
+                <div class="wheel-container">
+                    <div class="pointer"></div>
+                    <div class="wheel" id="wheel">
+                        <!-- Wheel segments will be generated here -->
+                        <div class="wheel-center">
+                            <i class="fas fa-gift"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="spin-btn" class="spin-btn">SPIN</button>
+        </div>
+        
+        <!-- Winners List Tab -->
+        <div id="winners-tab" class="tab-content">
+            <h2>Winners</h2>
+            <p>List of previous winners</p>
+            
+            <ul id="winners-list" class="winners-list">
+                <!-- Winners will be listed here -->
+            </ul>
+            
+            <div id="empty-winners" class="empty-state">
+                <i class="fas fa-trophy"></i>
+                <p>No winners yet</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="#" class="nav-item active" data-tab="participants-tab">
+            <i class="fas fa-users"></i>
+            <span>Participants</span>
+        </a>
+        <a href="#" class="nav-item center-nav" data-tab="wheel-tab">
+            <i class="fas fa-gift"></i>
+        </a>
+        <a href="#" class="nav-item" data-tab="winners-tab">
+            <i class="fas fa-trophy"></i>
+            <span>Winners</span>
+        </a>
+    </div>
+
+    <script>
+        // DOM Elements
+        const participantsTab = document.getElementById('participants-tab');
+        const wheelTab = document.getElementById('wheel-tab');
+        const winnersTab = document.getElementById('winners-tab');
+        const participantList = document.getElementById('participant-list');
+        const winnersList = document.getElementById('winners-list');
+        const participantNameInput = document.getElementById('participant-name');
+        const addParticipantBtn = document.getElementById('add-participant');
+        const spinBtn = document.getElementById('spin-btn');
+        const wheel = document.getElementById('wheel');
+        const winnerScreen = document.getElementById('winner-screen');
+        const winnerName = document.getElementById('winner-name');
+        const closeWinnerBtn = document.getElementById('close-winner');
+        const emptyParticipants = document.getElementById('empty-participants');
+        const emptyWinners = document.getElementById('empty-winners');
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        // Data
+        let participants = JSON.parse(localStorage.getItem('participants')) || [];
+        let winners = JSON.parse(localStorage.getItem('winners')) || [];
+        
+        // Initialize the app
+        function init() {
+            renderParticipants();
+            renderWinners();
+            updateEmptyStates();
+            updateWheel();
+            
+            // Event Listeners
+            addParticipantBtn.addEventListener('click', addParticipant);
+            participantNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addParticipant();
+            });
+            
+            spinBtn.addEventListener('click', spinWheel);
+            closeWinnerBtn.addEventListener('click', closeWinnerScreen);
+            
+            // Navigation
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tabId = item.getAttribute('data-tab');
+                    switchTab(tabId);
+                    
+                    // Update active nav item
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    // Update wheel when switching to wheel tab
+                    if (tabId === 'wheel-tab') {
+                        updateWheel();
+                    }
+                });
+            });
+        }
+        
+        // Tab switching
+        function switchTab(tabId) {
+            // Hide all tabs
+            participantsTab.classList.remove('active-tab');
+            wheelTab.classList.remove('active-tab');
+            winnersTab.classList.remove('active-tab');
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active-tab');
+        }
+        
+        // Add participant
+        function addParticipant() {
+            const name = participantNameInput.value.trim();
+            if (name) {
+                participants.push(name);
+                saveParticipants();
+                renderParticipants();
+                updateWheel();
+                participantNameInput.value = '';
+                updateEmptyStates();
+            }
+        }
+        
+        // Delete participant
+        function deleteParticipant(index) {
+            participants.splice(index, 1);
+            saveParticipants();
+            renderParticipants();
+            updateWheel();
+            updateEmptyStates();
+        }
+        
+        // Render participants list
+        function renderParticipants() {
+            participantList.innerHTML = '';
+            
+            participants.forEach((participant, index) => {
+                const li = document.createElement('li');
+                li.className = 'participant-item';
+                li.innerHTML = `
+                    <span>${participant}</span>
+                    <button class="delete-btn" data-index="${index}">Delete</button>
+                `;
+                participantList.appendChild(li);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = e.target.getAttribute('data-index');
+                    deleteParticipant(index);
+                });
+            });
+        }
+        
+        // Render winners list
+        function renderWinners() {
+            winnersList.innerHTML = '';
+            
+            winners.forEach(winner => {
+                const li = document.createElement('li');
+                li.className = 'winner-item';
+                li.innerHTML = `
+                    <span>${winner.name}</span>
+                    <span class="winner-date">${winner.date}</span>
+                `;
+                winnersList.appendChild(li);
+            });
+        }
+        
+        // Update wheel with participant names
+        function updateWheel() {
+            wheel.innerHTML = '';
+            
+            if (participants.length === 0) {
+                // Add default center if no participants
+                const center = document.createElement('div');
+                center.className = 'wheel-center';
+                center.innerHTML = '<i class="fas fa-gift"></i>';
+                wheel.appendChild(center);
+                return;
+            }
+            
+            const colors = [
+                '#ff9a9e', '#fad0c4', '#a1c4fd', '#c2e9fb', 
+                '#ffecd2', '#fcb69f', '#84fab0', '#8fd3f4'
+            ];
+            
+            const segmentAngle = 360 / participants.length;
+            
+            participants.forEach((participant, index) => {
+                const segment = document.createElement('div');
+                segment.className = 'wheel-segment';
+                segment.style.transform = `rotate(${index * segmentAngle}deg)`;
+                segment.style.background = `conic-gradient(from 0deg at 50% 50%, ${colors[index % colors.length]} 0%, ${colors[(index + 1) % colors.length]} 100%)`;
+                
+                const content = document.createElement('div');
+                content.className = 'segment-content';
+                content.textContent = participant;
+                content.style.transform = `rotate(${segmentAngle / 2}deg)`;
+                
+                segment.appendChild(content);
+                wheel.appendChild(segment);
+            });
+            
+            // Add center
+            const center = document.createElement('div');
+            center.className = 'wheel-center';
+            center.innerHTML = '<i class="fas fa-gift"></i>';
+            wheel.appendChild(center);
+        }
+        
+        // Spin the wheel
+        function spinWheel() {
+            if (participants.length === 0) {
+                alert('Please add participants first!');
+                return;
+            }
+            
+            // Disable spin button during animation
+            spinBtn.disabled = true;
+            
+            // Hide winner screen if visible
+            winnerScreen.style.display = 'none';
+            
+            // Calculate random rotation (multiple full rotations + random segment)
+            const segments = participants.length;
+            const segmentAngle = 360 / segments;
+            const extraRotations = 8; // More rotations for faster spin
+            const randomSegment = Math.floor(Math.random() * segments);
+            const rotation = (extraRotations * 360) + (360 - (randomSegment * segmentAngle));
+            
+            // Apply rotation with faster animation
+            wheel.style.transition = 'transform 2.5s cubic-bezier(0.2, 0.8, 0.1, 0.9)';
+            wheel.style.transform = `rotate(${rotation}deg)`;
+            
+            // Determine winner after animation
+            setTimeout(() => {
+                const winner = participants[randomSegment];
+                showWinner(winner, randomSegment);
+                spinBtn.disabled = false;
+            }, 2500);
+        }
+        
+        // Show winner screen
+        function showWinner(winner, index) {
+            // Remove winner from participants
+            participants.splice(index, 1);
+            saveParticipants();
+            renderParticipants();
+            updateWheel();
+            
+            // Add winner to winners list
+            const winnerData = {
+                name: winner,
+                date: new Date().toLocaleDateString()
+            };
+            winners.unshift(winnerData);
+            saveWinners();
+            renderWinners();
+            
+            // Show winner screen above the wheel
+            winnerName.textContent = winner;
+            winnerScreen.style.display = 'block';
+            updateEmptyStates();
+        }
+        
+        // Close winner screen
+        function closeWinnerScreen() {
+            winnerScreen.style.display = 'none';
+        }
+        
+        // Update empty states
+        function updateEmptyStates() {
+            emptyParticipants.style.display = participants.length === 0 ? 'block' : 'none';
+            emptyWinners.style.display = winners.length === 0 ? 'block' : 'none';
+        }
+        
+        // Save data to localStorage
+        function saveParticipants() {
+            localStorage.setItem('participants', JSON.stringify(participants));
+        }
+        
+        function saveWinners() {
+            localStorage.setItem('winners', JSON.stringify(winners));
+        }
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
